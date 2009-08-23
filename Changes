@@ -10,3 +10,7 @@ Revision history for DBIx-Simple-Procedure
         Create a standardized error message via the _error routine
         Fixed cursor counter
         Fixed processor method, was ignoring statement with multiple placeholders
+1.40    08/23/2009 6:14 PM EST
+        Fixed proceed command and its synonyms validif and ifvalid
+        Added setting command to instruct the module on how to handle blank parameters
+        Added the ability to pass a hashref to be processed
