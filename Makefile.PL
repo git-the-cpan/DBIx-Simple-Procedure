@@ -1,14 +1,14 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
-#use inc::Module::Install;
+use inc::Module::Install;
+#use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME                => 'DBIx::Simple::Procedure',
     AUTHOR              => q{Al Newkirk <al.newkirk@awnstudio.com>},
     VERSION_FROM        => 'lib/DBIx/Simple/Procedure.pm',
     ABSTRACT_FROM       => 'lib/DBIx/Simple/Procedure.pm',
-    ($ExtUtils::MakeMaker::VERSION >= 6.3002
+    (1
       ? ('LICENSE'=> 'perl')
       : ()),
     PL_FILES            => {},

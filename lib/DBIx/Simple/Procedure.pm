@@ -10,47 +10,48 @@ DBIx::Simple::Procedure - An Alternative To SQL Stored Procedures using DBIx::Si
 
 =head1 VERSION
 
-Version 1.40
+Version 1.57
 
 =cut
 
-our $VERSION = '1.40';
+our $VERSION = '1.57';
 our @properties = caller();
 
 =head1 SYNOPSIS
 
-This module allow your program to process text files containing one or many commands
-that execute SQL statements sequentially. Please keep in mind that DBIx::Simple::Procedure
-is an alternative to database stored procedures and not a replacement or emulation of
-them. Essentially it is an interface to execute and return data from multiple queries.
+This module allow your program to process text files containing one or many
+commands that execute SQL statements sequentially. Please keep in mind that
+DBIx::Simple::Procedure is an alternative to database stored procedures and not
+a replacement or emulation of them. Essentially it is an interface to execute
+and return data from multiple queries.
 
 Here is an example of how to setup and process a (sql) text file.
 
-# DBIx::Simple::Procedure uses DBIx::Simple and provides an accessor through the
-DBIx::Simple::Procedure->{dbix} hash reference.
-
-use DBIx::Simple::Procedure;
-my $db = DBIx::Simple::Procedure->new($path_to_sqlfiles, 'dbi:SQLite:dbname=file.dat');
-# Will error out using DBIx::Simple if a connection error occurs.
-
-# The queue function takes one parameter (a text file) that contains DBIx::Simple::Procedure
-# sql commands.
-
-# The process_queue function processes all queued sql statements using the parameters passed
-# to it, similar to the execute function of DBI.
-
-$db->queue($sql_file)->process_queue(@sql_parameters);
-
-# The cache function returns an array of resultsets, or the resultset of the index passed,
-# return by the select statements encountered in the sql file.
-# Note! files included using the "include" command will not have there resultsets cached,
-# even if a "capture" command is encountered, only the select statement(s) found in the
-# initial sql file are cached in the order they are encountered.
-
-foreach my $result (@{$db->cache(0)}){
-    # do something with the records of the first resultset
-    $result->{...};
-}
+    # DBIx::Simple::Procedure uses DBIx::Simple and provides an accessor through the
+    DBIx::Simple::Procedure->{dbix} hash reference.
+    
+    use DBIx::Simple::Procedure;
+    my $db = DBIx::Simple::Procedure->new($path_to_sqlfiles, 'dbi:SQLite:dbname=file.dat');
+    # Will error out using DBIx::Simple if a connection error occurs.
+    
+    # The queue function takes one parameter (a text file) that contains DBIx::Simple::Procedure
+    # sql commands.
+    
+    # The process_queue function processes all queued sql statements using the parameters passed
+    # to it, similar to the execute function of DBI.
+    
+    $db->queue($sql_file)->process_queue(@sql_parameters, {other_param_a => 'excepts_hashrefs_also'});
+    
+    # The cache function returns an array of resultsets, or the resultset of the index passed,
+    # return by the select statements encountered in the sql file.
+    # Note! files included using the "include" command will not have there resultsets cached,
+    # even if a "capture" command is encountered, only the select statement(s) found in the
+    # initial sql file are cached in the order they are encountered.
+    
+    foreach my $result (@{$db->cache(0)}){
+        # do something with the records of the first resultset
+        $result->{...};
+    }
 
 =head1 SQL FILE SYNTAX
 
@@ -64,87 +65,148 @@ E.g. "! execute select * from foo".
 Multiple commands can be used in a single sql file.
 Note! multi-line sql statements not supported in this release.
 
-SQL File Commands:
+    SQL File Commands:
+        
+    ! execute:
+        This command simply execute the supplied sql statement.
     
-! execute:
-            This command simply execute the supplied sql statement.
-
-! capture:
-            This is an execute command who's dataset will be cached (stored) for later use.
-            Note! This command can only be used with a select statement.
-
-! replace:
-            This is an execute command that after successfully executed, replaces the scope
-            parameters with data from the last row in its dataset. Note! This command can
-            only be used with a select statement.
-
-! include:
-            This command processes the supplied sql file in a sub transaction. Note! Included
-            sql file processing is isolated from the current processing. Any capture commands
-            encountered in the included sql files will not cache the dataset.
-
-! proceed:
-            This command should be read "proceed if" because it evaluates the string passed
-            (perl code) for truth, if true, it continues if false it skips to the next proceed
-            command or until the end of the sql file.
-
-! ifvalid:
-            This command is a synonym for proceed.
-
-! storage:
-            This command does absolutely nothing except store the sql statement in the commands
-            list (queue) for processing individually from within the perl code with a method
-            like process_command.
-
-! declare:
-            This command is effectively equivalent to the select .. into sql sytax and uses an
-            sql select statement to add vairables to the scope for processing
-            (e.g. ! declare select `name` from `foo` where `id` = $0) can be used in other
-            instructions as $!name, e.g. ! execute update `foo` set `name` = $!name where `id` = $0.
-
-! forward:
-            This command takes an index and jumps to that command line and continues.
-
-! process:
-            This command takes an index and executes that command line.
-
-! examine:
-            This command is used for debugging, it errors out with the compiled statement passed to it.
+    ! capture:
+        This is an execute command who's dataset will be cached (stored) for later use.
+        Note! This command can only be used with a select statement.
     
-=head1 EXAMPLE
+    ! replace:
+        This is an execute command that after successfully executed, replaces the scope
+        parameters with data from the last row in its dataset. Note! This command can
+        only be used with a select statement.
+    
+    ! include:
+        This command processes the supplied sql file in a sub transaction. Note! Included
+        sql file processing is isolated from the current processing. Any capture commands
+        encountered in the included sql files will not cache the dataset.
+    
+    ! proceed:
+        This command should be read "proceed if" because it evaluates the string passed
+        (perl code) for truth, if true, it continues if false it skips to the next proceed
+        command or until the end of the sql file.
+    
+    ! ifvalid:
+        This command is a synonym for proceed.
+    
+    ! storage:
+        This command does absolutely nothing except store the sql statement in the commands
+        list (queue) for processing individually from within the perl code with a method
+        like process_command.
+    
+    ! declare:
+        This command is effectively equivalent to the select .. into sql sytax and uses an
+        sql select statement to add vairables to the scope for processing
+        (e.g. ! declare select `name` from `foo` where `id` = $0) can be used in other
+        instructions as $!name, e.g. ! execute update `foo` set `name` = $!name where `id` = $0.
+    
+    ! forward:
+        This command takes an index and jumps to that command line and continues from there.
+        Similar to a rewind or fast forward function for the command queue.
+    
+    ! process:
+        This command takes an index and executes that command line.
+    
+    ! examine:
+        This command is used for debugging, it errors out with the compiled statement passed to it.
+    
+=head1 INCLUDED EXAMPLE
 
-# inside tables/group/insert.sql
-! include tables/group/create.sql
-! proceed 1 == 2
-! execute insert into `group` values (null, concat_ws(' ', 'Test A', $0))
-! proceed 1 == 1
-! execute insert into `group` values (null, concat_ws(' ', 'Test B', $0))
-! proceed 1
-! capture select * from `group`
+Inside tables/users/getall (.sql omitted purposefully).
 
-# inside tables/group/create.sql
-! execute create table if not exists `group` (`id` int(11) auto_increment, `info` varchar(255) not null, primary key(`id`) )
-! execute truncate table `group`
+    # mysql example
+    
+    # this command tell DSP to treat passed in parameters that are left blank
+    # as integers with a value of zero, by default it is '' (an empty string),
+    # it can also be null
+    ! setting blank as zero
+    
+    # does what it says, no special magic here
+    ! execute create table if not exists `group` (`id` int(11) auto_increment, `info` varchar(255) not null, primary key(`id`) )
+    ! execute truncate table `group`
+    
+    # the declare command stores the list of values in the custom parameters hash
+    # using the column names as keys
+    ! declare select '0' as `count`
+    ! execute insert into `group` values (null, concat_ws(' ', 'I typed', $0, ($!count + 1), 'times.'))
+    
+    # hopefully not often but there are times when the sql command file should
+    # loop, evakuate, etc
+    
+    # validif, and ifvalid are synonyms for proceed reads a perl expression which
+    # may contain passed or declared parameters, and if true proceeds to the next
+    # command, not false, skip every following command until it reached a proceed,
+    # ifvalid, or validif command the evalutes true, or reaches the end of the file
+    
+    # begin loop
+    ! declare select count(*) as `count` from `group`
+    ! validif $!count < 5
+    ! forward 4
+    ! ifvalid 1
+    # end loop
+    
+    # capture store the returned data in the sets array which contains all resultsets
+    # returned by the encountered capture commands
+    ! capture select * from `group`
 
-# inside test.pl
-use FindBin;
-use DBIx::Simple::Procedure;
+Inside the test.pl script.
 
-# connecting to a mysql database
-my $fs = "$FindBin::Bin/";
-my $db = DBIx::Simple::Procedure->new(
-    $fs,
-    'dbi:mysql:database=foo', # dbi source specification
-    '', '',                     # username and password
-) or die DBIx::Simple::Procedure->error;
+    #!/usr/env/perl -w
+    
+    BEGIN {
+        use FindBin;
+        use lib "$FindBin::Bin/lib";
+    }
+    
+    use DBIx::Simple::Procedure;
+    
+    # connecting to a mysql database
+    my $fs = "$FindBin::Bin/sql/";
+    my $db = DBIx::Simple::Procedure->new(
+        $fs,
+        'dbi:mysql:database=test', # dbi source specification
+        'root', '',                     # username and password
+    );
+    
+    $db->queue('tables/users/getall')->process_queue('this is a test');
+    
+    foreach my $result (@{$db->cache(0)}){
+        print "$result->{info}\n"; # database column
+    }
+     
+    print "\nDone. Found " . ( @{$db->cache(0)} || 0 ) . " records";
+    
+=head1 MORE SQL COMMAND FILE EXAMPLES
 
-$db->queue('tables/group/insert.sql')->process_queue('One fish, two fish, red fish, blue fish.');
-# or $db->queue('tables/group/insert.sql')->process_command(4,'One fish, two fish, red fish, blue fish.');
-# the process_command method executes the 5th command in the tables/group/insert.sql file.
+Replacing passed in parameters.
 
-foreach my $result (@{$db->cache(0)}){
-    # $result->{...};
-}
+    ... in script
+    $dsp->queue(...)->process_queue({'foo' => 'bar'});
+    ... in sql file
+    ! replace select 'baz' as `foo`
+    # $!foo in the sql command file now has the value 'baz'
+
+Using the storage, forward and process commands.
+
+    ... in script
+    $dsp->queue(...)->process_queue({'foo' => 'bar'});
+    ... in sql file
+    ! forward 2
+    ! execute insert into `foo` (NULL, 'bar', 'baz')
+    ! execute insert into `foo` (NULL, 'bar', 'baz')
+    ! process 1
+    ! capture select * from `foo`
+    
+    # this sql file is intentionally meant to be confusing, the insert query will
+    # be executed 2 times, as a test, see if you can figure out why
+
+NOTE! When using the forward and/or process commands, please be aware that they
+both take a command line index which means that if your not careful when you update
+the sql file at a later date, you could be shifting the index which means your sql
+file will execute but not as you intended.
 
 =head1 METHODS
 
@@ -220,7 +282,7 @@ sub _load_commands {
     $self->{commands}->{include} = sub {
         my ($statement, @parameters) = @_;
         my ($sub_sqlfile, $placeholders) = split /\s/, $statement;
-        DBIx::Simple::Procedure->new($self->{path}, $self->{dbix}->{dbh})->queue($sub_sqlfile)->process_queue(@parameters);
+        DBIx::Simple::Procedure->new($self->{path}, $self->{dbix}->{dbh})->queue($sub_sqlfile)->process_queue(@parameters, $self->{processing}->{custom_parameters});
     };
     
     #! storage: stores sql statements for later
@@ -506,12 +568,15 @@ The clear method simply clears the cache (resultset store)
 sub clear {
     my $self = shift;
     $self->{cmds} = '';
+    $self->{sets} = [];
+    $self->{processing}->{resultset} = '';
+    $self->{processing}->{skip_switch} = 0;
+    $self->{processing}->{parameters} = [];
+    $self->{processing}->{custom_parameters} = {};
+    $self->{cursor} = 0;
+    
     return $self;
 }
-
-=head1 TODO
-
-...
 
 =head1 AUTHOR
 

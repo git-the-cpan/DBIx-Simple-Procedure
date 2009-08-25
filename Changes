@@ -14,3 +14,7 @@ Revision history for DBIx-Simple-Procedure
         Fixed proceed command and its synonyms validif and ifvalid
         Added setting command to instruct the module on how to handle blank parameters
         Added the ability to pass a hashref to be processed
+1.57    08/24/2009 11:16 PM EST
+        Included better documentation
+        The include command now passes existing custom parameters
+        Fixed the clear command to include re-initializing the resultsets, the queue, etc
